@@ -1,0 +1,9 @@
+ r←MantisAPI url;headers;api;resp
+ api←'https://mantis.dyalog.com/api/rest/'
+ headers←1 2⍴'Authorization'MANTISAPITOKEN
+ resp←HttpCommand.Get(api,url)''headers
+ :If resp.rc∊0 ¯1
+     r←resp.Data
+ :Else
+     (⍕r)⎕SIGNAL 11
+ :EndIf

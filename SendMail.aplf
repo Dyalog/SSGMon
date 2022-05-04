@@ -1,0 +1,13 @@
+SendMail (mailserver sender password recipient subject body);smtp
+⍝ mailserver←'mail.dyalog.com'
+⍝ sender←'mkrom@dyalog.com'
+⍝ recipient←'mkrom@dyalog.com'
+⍝ password←'…'
+⍝ subject←'Hello from Morten'
+⍝ body←'This is a test e-mail message'
+
+  ⎕USING←'System.Net,System.Net.Mail' 'System.Net,System.Net.Primitives' ⍝ .NET Core
+
+  smtp←⎕NEW Mail.SmtpClient(⊂mailserver)
+  smtp.Credentials←⎕NEW NetworkCredential (sender password)
+  smtp.Send ⎕NEW Mail.MailMessage(sender recipient subject body)

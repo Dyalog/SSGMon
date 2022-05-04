@@ -1,0 +1,9 @@
+ISOtoDN←{ ⍝ "2021-07-22T10:20:39+01:00" to Day Number (1 ⎕DT)
+   25≠≢⍵:'Invalid ISO timestamp' ⎕SIGNAL 11
+   nums←2⊃'-+:T' ⎕VFI ⍵ ⍝ All numeric fields
+   bad←⍵[5 8 11 14 17 23]≢'--T:::'
+   bad∨←~(sign←⍵[20])∊'+-'
+   bad∨8≠≢nums:'Invalid ISO timestamp' ⎕SIGNAL 11
+   utcoff←(60⊥¯2↑nums)÷1440×¯1*'+'=sign
+   utcoff+1 ⎕DT ⊂6↑nums
+}

@@ -1,0 +1,12 @@
+{ 
+  Extend: "SSGMon.dcfg",
+
+  Settings: {           
+      SSG: {
+         INTERVAL: 7 // Report last week's changes
+      }
+  }
+}
+
+
+

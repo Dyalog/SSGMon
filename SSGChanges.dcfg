@@ -1,0 +1,12 @@
+{ 
+  Extend: "SSGMon.dcfg",
+
+  Settings: {           
+      SSG: {
+         INTERVAL: 0 // Changes since last run
+      }
+  }
+}
+
+
+
