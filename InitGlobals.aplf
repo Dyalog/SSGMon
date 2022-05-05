@@ -4,11 +4,11 @@
  env←{⍺←'' ⋄ 0=≢r←2 ⎕NQ'.' 'GetEnvironment'⍵:⍺ ⋄ r}
 
 ⍝ From config files
- LOGFILE←                     env 'SSG\LOGFILE'
+ LOGFILE← '/tmp/security_issue_log.dcf' env 'SSG\LOGFILE'
  INTERVAL←         ⎕JSON '-1' env 'SSG\INTERVAL' ⍝ Default: Report all issues
  MAILSERVER←'mail.dyalog.com' env 'SSG\MAILSERVER'
- MAILFROM←                    env 'SSG\MAILFROM'
- MAILTO←                      env 'SSG\MAILTO'
+ MAILFROM← 'mkrom@dyalog.com' env 'SSG\MAILFROM'
+ MAILTO←   'mkrom@dyalog.com' env 'SSG\MAILTO'
 
 ⍝ From environment: DO NOT PUT THESE in config!
  SMTPPASS←                    env 'SMTP_PWD'
