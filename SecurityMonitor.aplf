@@ -1,9 +1,15 @@
- txt←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums
+ txt←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m
  ⍝ Return text of e-mail to send to SSG.
  ⍝ start is the timestamp of the last run in (1 ⎕DT) format
  ⍝ if interval=¯1, report all open issues (weekly run)
  ⍝ if interval=0, issues modified since last run (regardless of status)
  ⍝ else issues modified in last "interval" days (regardless of status)
+
+
+ :If ∨/m←0=≢¨MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN
+     txt←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN'
+     →0
+ :EndIf
 
  tsfmt←'Mmm DD hh:mm'∘(1200⌶)
  cols←'id' 'updated' 'status' 'reporter' 'handler' 'summary'
