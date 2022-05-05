@@ -1,4 +1,4 @@
- txt←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m
+ {msg}←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn
  ⍝ Return text of e-mail to send to SSG.
  ⍝ start is the timestamp of the last run in (1 ⎕DT) format
  ⍝ if interval=¯1, report all open issues (weekly run)
@@ -33,7 +33,14 @@
      (now new)⎕FAPPEND tn
  :EndIf
 
- (then old)←⎕FREAD tn,¯1+2⊃⎕FSIZE tn ⍝ read last component
+ :If 2=⍴⍴old←⎕FREAD tn,cn←¯1+2⊃⎕FSIZE tn ⍝ if last comonent is a matrix
+     then←2 1 ⎕DT 3⊃⎕FRDCI tn,cn         ⍝    ... then get timestamp from component information
+ :ElseIf 2=⍴old
+     (then old)←old                      ⍝ ... else component should contain timestamp and data
+ :Else
+     msg←'Invalid file format'
+     →SEND
+ :EndIf
 
  :If old[;1 2]≢new[;1 2]   ⍝ Something changed?
      (now new)⎕FAPPEND tn  ⍝ Write a new record
