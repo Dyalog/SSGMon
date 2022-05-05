@@ -1,4 +1,4 @@
- {msg}←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn
+ {msg}←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed
  ⍝ Return text of e-mail to send to SSG.
  ⍝ start is the timestamp of the last run in (1 ⎕DT) format
  ⍝ if interval=¯1, report all open issues (weekly run)
@@ -11,7 +11,7 @@
      →SEND
  :EndIf
 
- tsfmt←'Mmm DD hh:mm'∘(1200⌶)
+ tsfmt←TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
  cols←'id' 'updated' 'status' 'reporter' 'handler' 'summary'
 
  f←(⎕JSON MantisAPI'filters').filters.(id name)
@@ -49,28 +49,28 @@
 
 :Select interval
 :Case ¯1 ⍝ All open issues
-    tbl←(~new[;3]∊⊂'closed')⌿new
+    added←gone←0⌿new
+    changed←(~new[;3]∊⊂'closed')⌿new
     subject←'List of All Open Security Issues'
 
-:Case 0  ⍝ All changes since last run
+:Else    ⍝ Changes since last run
+    added←(~new[;1]∊old[;1])⌿new
     gone←(~old[;1]∊new[;1])⌿old ⍝ disappeared from the list
-    gone[;3]←⊂'**UNFLAGGED**'
-    tbl←gone⍪(~(↓new[;1 2])∊↓old[;1 2])⌿new
-    subject←'Security Issues modified since ',tsfmt then
-
-:Else    ⍝ Changes in last "interval" days
-    tbl←(new[;2]>when←now-interval)⌿new
-    subject←'Security Issues modified since ',tsfmt when
+    changed←(~(new[;1]∊added[;1],gone[;1])∨(↓new[;1 2])∊↓old[;1 2])⌿new
+    subject←'Changes since ',⊃tsfmt then
 
 :EndSelect
 
-  nums←⍕¨tbl[;1] ⍝ Now create Mantis Links
-  tbl[;1]←'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨⊂'>',¨nums,¨⊂'</a>'
-  tbl[;2]←tsfmt tbl[;2]
-    msg←1↓,(⎕UCS 13),⍕⍕¨cols⍪tbl
-    ∘∘∘
+ :If 0≠≢tbl←⊃⍪/(⊂¨'<b>*NEW*</b>' 'Updated' 'Removed'),¨added changed gone
+    nums←⍕¨tbl[;2] ⍝ Now create Mantis Links
+    msg←tbl[;1],¨' ',¨(tsfmt tbl[;3]),¨⊂': '
+    msg←msg,¨'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a> '),¨tbl[;7]
+    msg←∊msg,¨⊂'<br />'
+ :Else
+    msg←''
+ :EndIf
 
 SEND:
-:If 0≠≢tbl
+:If 0≠≢msg
     SendMail MAILSERVER MAILFROM SMTPPASS MAILTO subject msg
 :EndIf
