@@ -5,10 +5,10 @@
  ⍝ if interval=0, issues modified since last run (regardless of status)
  ⍝ else issues modified in last "interval" days (regardless of status)
 
-
+ subject←'Error' ⍝ If anything goes wrong en route
  :If ∨/m←0=≢¨MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN
-     txt←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN'
-     →0
+     msg←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN'
+     →SEND
  :EndIf
 
  tsfmt←'Mmm DD hh:mm'∘(1200⌶)
@@ -62,7 +62,7 @@
     msg←1↓,(⎕UCS 13),⍕⍕¨cols⍪tbl
     ∘∘∘
 
-
+SEND:
 :If 0≠≢tbl
     SendMail MAILSERVER MAILFROM SMTPPASS MAILTO subject msg
 :EndIf
