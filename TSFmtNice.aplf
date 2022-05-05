@@ -1,0 +1,16 @@
+ r←TSFmtNice ts;now;yday;today;z;i;m;idn;s;tomorrow;later;ix;w
+ ⍝ Format a vector of 1 ⎕DT's nicely
+ s←⍴ts
+ later←1+tomorrow←2+yday←¯1+today←⌊now←1 ⎕DT'J'
+ r←16↑⍤1⊢↑'DD Mmm hh:mm'(1200⌶)ts←,ts ⍝ Make matrix
+ :If 0≠≢i←⍸m←1 2 3∊⍨ix←+/ts∘.≥yday,today,tomorrow,later
+     r[i;]←r[i;7+⍳5],' ',(3 10⍴'yesterday today     tomorrow  ')[ix[i];]
+ :EndIf
+ r[i;7+⍳5]←↑5↑¨'YYYY'(1200⌶)ts[i←⍸~m] ⍝ Replace time by year if longer ago
+ :If 0≠⍴i←((z>0)∧100>z←⌊(now-ts)×24×60)/⍳⍴ts
+     r[i;]←16↑[2]↑(⍕¨⌊z[i]),¨(' minutes ago' ' minute ago')[1+1=z[i]]
+ :EndIf
+ :If 0≠⍴i←(1>|z)/⍳⍴ts
+     r[i;]←((⍴i),16)⍴16↑'Now'
+ :EndIf
+ r←s⍴(+/∨\' '≠⌽r)↑¨↓r
