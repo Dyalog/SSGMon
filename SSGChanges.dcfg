@@ -1,5 +1,5 @@
 { 
-  Extend: "SSGMon.dcfg",
+  Extend: "Run.dcfg",
 
   Settings: {           
       SSG: {
