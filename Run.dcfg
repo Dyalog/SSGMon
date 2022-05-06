@@ -6,7 +6,6 @@
          LOGFILE: "/tmp/security_issue_log.dcf",
          INTERVAL: -1, // Report All Security Issues 
                        // 0 means report changes since last run
-                       // n>0 is # of days to report changes for (typically 7)
          MAILSERVER: "mail.dyalog.com",
          MAILFROM:   "mkrom@dyalog.com", // nightly@dyalog.com when we are in production
          MAILTO:     "mkrom@dyalog.com", // ssg@dyalog.com
