@@ -9,6 +9,8 @@
  MAILSERVER←'mail.dyalog.com' env 'SSG\MAILSERVER'
  MAILFROM← 'mkrom@dyalog.com' env 'SSG\MAILFROM'
  MAILTO←   'mkrom@dyalog.com' env 'SSG\MAILTO'
+ SSGDEBUG←          ⎕JSON '0' env 'SSG\DEBUG'
+
 
 ⍝ From environment: DO NOT PUT THESE in config!
  SMTPPASS←                    env 'SMTP_PWD'

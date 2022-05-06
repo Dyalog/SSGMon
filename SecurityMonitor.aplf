@@ -72,5 +72,6 @@
 
 SEND:
 :If 0≠≢msg
-    SendMail MAILSERVER MAILFROM SMTPPASS MAILTO subject msg
+ :If ~SSGDEBUG
+     ⎕OFF
 :EndIf
