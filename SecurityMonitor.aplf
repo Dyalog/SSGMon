@@ -1,4 +1,4 @@
- {msg}←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed
+ {msg}←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues
  ⍝ Return text of e-mail to send to SSG.
  ⍝ start is the timestamp of the last run in (1 ⎕DT) format
  ⍝ if interval=¯1, report all open issues (weekly run)
@@ -12,13 +12,15 @@
  :EndIf
 
  tsfmt←TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
- cols←'id' 'updated' 'status' 'reporter' 'handler' 'summary'
+ cols←'id' 'updated' 'status' 'reporter' 'summary'
 
  f←(⎕JSON MantisAPI'filters').filters.(id name)
- f←{(⍵⍳⊂'All Security Issues')⊃⍺}/↓⍉↑f ⍝ The filter ID
+ f←∊{(⍵∊'Security=Yes' 'Security "Not Sure"')/⍺}/↓⍉↑f ⍝ The filter ID
 
- ns←⎕JSON MantisAPI 'issues?filter_id=',⍕f
- new←↑ns.issues.(id updated_at status.name reporter.name handler.name summary) ⍝ New Status
+ ns←{⎕JSON MantisAPI 'issues?filter_id=',⍕⍵}¨f
+ issues←⊃,/ns.issues
+ new←↑issues.(id updated_at status.name reporter.name summary) ⍝ New Status
+ new,←issues.(((custom_fields.(field.name))⍳⊂'Security Related')⊃custom_fields.value)
  new[;2]←ISOtoDN¨new[;2] ⍝ ISO timestamps to UTC IDN
 
  now←1 ⎕DT'Z' ⍝ Current UTC time
@@ -64,7 +66,9 @@
  :If 0≠≢tbl←⊃⍪/(⊂¨'<b>*NEW*</b>' 'Updated' 'Removed'),¨added changed gone
      nums←⍕¨tbl[;2] ⍝ Now create Mantis Links
      msg←tbl[;1],¨' ',¨(tsfmt tbl[;3]),¨⊂': '
-     msg←msg,¨'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a> '),¨tbl[;7]
+     msg←msg,¨'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a>')
+     msg←msg,¨', Security Related = '∘,¨tbl[;7]
+     msg←msg,¨': '∘,¨tbl[;6]
      msg←∊msg,¨⊂'<br />'
  :Else
      msg←''
