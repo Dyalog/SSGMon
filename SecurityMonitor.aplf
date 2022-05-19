@@ -1,84 +1,114 @@
- {msg}←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues
+ {msg}←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues;logdir
  ⍝ Return text of e-mail to send to SSG.
  ⍝ start is the timestamp of the last run in (1 ⎕DT) format
  ⍝ if interval=¯1, report all open issues (weekly run)
  ⍝ if interval=0, issues modified since last run (regardless of status)
  ⍝ else issues modified in last "interval" days (regardless of status)
+ ⍝ Use EC of 12 for expected failures, 13 for global unexpected failure
 
- subject←'Error' ⍝ If anything goes wrong en route
- :If ∨/m←0=≢¨MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN
-     msg←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN'
-     →SEND
+ :If ~1∧.≤m←2↑2250⌶0
+     ⎕←'ERROR: Problem with .NET: 2250⌶0 returned ',m
+     ⎕OFF 12
  :EndIf
 
- tsfmt←TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
- cols←'id' 'updated' 'status' 'reporter' 'summary'
+ :Trap (~SSGDEBUG)/0
+     subject←'Error' ⍝ If anything goes wrong en route
+     :If ∨/m←0=≢¨MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN
+         msg←'Missing configuration: ',⍕m/' '(=⊂⊢)' MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN'
+         →SEND
+     :EndIf
 
- f←(⎕JSON MantisAPI'filters').filters.(id name)
- f←∊{(⍵∊'Security=Yes' 'Security "Not Sure"')/⍺}/↓⍉↑f ⍝ The filter ID
+     tsfmt←TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
+     cols←'id' 'updated' 'status' 'reporter' 'summary'
 
- ns←{⎕JSON MantisAPI 'issues?filter_id=',⍕⍵}¨f
- issues←⊃,/ns.issues
- new←↑issues.(id updated_at status.name reporter.name summary) ⍝ New Status
- new,←issues.(((custom_fields.(field.name))⍳⊂'Security Related')⊃custom_fields.value)
- new[;2]←ISOtoDN¨new[;2] ⍝ ISO timestamps to UTC IDN
+     f←(⎕JSON MantisAPI'filters').filters.(id name)
+     f←∊{(⍵∊'Security=Yes' 'Security "Not Sure"')/⍺}/↓⍉↑f ⍝ The filter ID
 
- now←1 ⎕DT'Z' ⍝ Current UTC time
+     ns←{⎕JSON MantisAPI'issues?filter_id=',⍕⍵}¨f
+     issues←⊃,/ns.issues
+     new←↑issues.(id updated_at status.name reporter.name summary) ⍝ New Status
+     new,←issues.(((custom_fields.(field.name))⍳⊂'Security Related')⊃custom_fields.value)
+     new[;2]←ISOtoDN¨new[;2] ⍝ ISO timestamps to UTC IDN
 
- :If ⎕NEXISTS LOGFILE
-     tn←LOGFILE ⎕FTIE 0
- :Else
-     tn←LOGFILE ⎕FCREATE 0
-     ⎕←'Created log file "',LOGFILE,'"'
-     'Security Monitor Log File v1.0'⎕FAPPEND tn
-     (9⍴⊂'reserved') ⎕FAPPEND¨tn
-     (now new)⎕FAPPEND tn
- :EndIf
+     now←1 ⎕DT'Z' ⍝ Current UTC time
 
- :If 2=⍴⍴old←⎕FREAD tn,cn←¯1+2⊃⎕FSIZE tn ⍝ if last comonent is a matrix
-     then←2 1 ⎕DT 3⊃⎕FRDCI tn,cn         ⍝    ... then get timestamp from component information
- :ElseIf 2=⍴old
-     (then old)←old                      ⍝ ... else component should contain timestamp and data
- :Else
-     msg←'Invalid file format'
-     →SEND
- :EndIf
+     :If ⎕NEXISTS LOGFILE
+         :Trap 0
+             tn←LOGFILE ⎕FTIE 0
+         :Else
+             ⎕←'ERROR: error attempting to ⎕ftie LOGFILE ',LOGFILE
+             ⎕←⎕JSON ⎕DMX
+             ⎕OFF 12
+         :EndTrap
+     :Else
+         logdir←⊃1 ⎕NPARTS LOGFILE
+         ⍝ ROS points out that ⎕nexists⋄12⎕ninfo has a timing hole, so safer to trap error if logdir doesn't exist
+         :Trap (~SSGDEBUG)/0
+             :If ~12 ⎕NINFO logdir
+                 ⎕←'ERROR: Unable to write to existant log directory ',logdir
+                 ⎕OFF 12
+             :EndIf
+         :Else
+             ⎕←'ERROR: log directory',logdir,' does not exist'
+             ⎕OFF 12
+         :EndTrap
+         tn←LOGFILE ⎕FCREATE 0
+         (1 3⍴0 ¯1 0)⎕FSTAC tn
+         ⎕←'Created log file "',LOGFILE,'"'
+         'Security Monitor Log File v1.0'⎕FAPPEND tn
+         (9⍴⊂'reserved')⎕FAPPEND¨tn
+         (now new)⎕FAPPEND tn
+     :EndIf
 
- :If old[;1 2]≢new[;1 2]   ⍝ Something changed?
-     (now new)⎕FAPPEND tn  ⍝ Write a new record
- :EndIf
- ⎕FUNTIE tn
+     :If 2=⍴⍴old←⎕FREAD tn,cn←¯1+2⊃⎕FSIZE tn ⍝ if last comonent is a matrix
+         then←2 1 ⎕DT 3⊃⎕FRDCI tn,cn         ⍝    ... then get timestamp from component information
+     :ElseIf 2=⍴old
+         (then old)←old                      ⍝ ... else component should contain timestamp and data
+     :Else
+         msg←'Invalid file format'
+         →SEND
+     :EndIf
 
- :Select interval
- :Case ¯1 ⍝ All open issues
-     added←gone←0⌿new
-     changed←(~new[;3]∊⊂'closed')⌿new
-     subject←'List of All Open Security Issues'
+     :If old[;1 2]≢new[;1 2]   ⍝ Something changed?
+         (now new)⎕FAPPEND tn  ⍝ Write a new record
+     :EndIf
+     ⎕FUNTIE tn
 
- :Else    ⍝ Changes since last run
-     added←(~new[;1]∊old[;1])⌿new
-     gone←(~old[;1]∊new[;1])⌿old ⍝ disappeared from the list
-     changed←(~(new[;1]∊added[;1],gone[;1])∨(↓new[;1 2])∊↓old[;1 2])⌿new
-     subject←'Changes since ',⊃tsfmt then
+     :Select interval
+     :Case ¯1 ⍝ All open issues
+         added←gone←0⌿new
+         changed←(~new[;3]∊⊂'closed')⌿new
+         subject←'List of All Open Security Issues'
 
- :EndSelect
+     :Else    ⍝ Changes since last run
+         added←(~new[;1]∊old[;1])⌿new
+         gone←(~old[;1]∊new[;1])⌿old ⍝ disappeared from the list
+         changed←(~(new[;1]∊added[;1],gone[;1])∨(↓new[;1 2])∊↓old[;1 2])⌿new
+         subject←'Changes since ',⊃tsfmt then
 
- :If 0≠≢tbl←⊃⍪/(⊂¨'<b>*NEW*</b>' 'Updated' 'Removed'),¨added changed gone
-     nums←⍕¨tbl[;2] ⍝ Now create Mantis Links
-     msg←tbl[;1],¨' ',¨(tsfmt tbl[;3]),¨⊂': '
-     msg←msg,¨'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a>')
-     msg←msg,¨', Security Related = '∘,¨tbl[;7]
-     msg←msg,¨': '∘,¨tbl[;6]
-     msg←∊msg,¨⊂'<br />'
- :Else
-     msg←''
- :EndIf
+     :EndSelect
+
+     :If 0≠≢tbl←⊃⍪/(⊂¨'<b>*NEW*</b>' 'Updated' 'Removed'),¨added changed gone
+         nums←⍕¨tbl[;2] ⍝ Now create Mantis Links
+         msg←tbl[;1],¨' ',¨(tsfmt tbl[;3]),¨⊂': '
+         msg←msg,¨'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a>')
+         msg←msg,¨', Security Related = '∘,¨tbl[;7]
+         msg←msg,¨': '∘,¨tbl[;6]
+         msg←∊msg,¨⊂'<br />'
+     :Else
+         msg←''
+     :EndIf
 
 SEND:
- :If 0≠≢msg
-     SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
- :EndIf
+     :If 0≠≢msg
+         SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
+     :EndIf
 
- :If ~SSGDEBUG
-     ⎕OFF
- :EndIf
+     :If ~SSGDEBUG
+         ⎕OFF
+     :EndIf
+ :Else ⍝ trap (xSSGDEBUG)/0
+     ⎕←'ERROR: Unexpected error in SSGMon'
+     ⎕←⎕JSON ⎕DMX
+     ⎕OFF 13
+ :EndTrap
