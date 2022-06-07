@@ -1,3 +1,22 @@
-Run dummy
-InitGlobals
-SecurityMonitor INTERVAL
+ Run dummy;msg;Exit;m
+⍝ Use Exit Code of 12 for expected failures,
+⍝                  13 for global unexpected errors
+
+ :If 0=⎕NC 'SSGDEBUG' ⋄ SSGDEBUG←0 ⋄ :EndIf
+ Exit←{SSGDEBUG:('Runtime would have exited with code ',⍕⍵)⎕SIGNAL 11 ⋄ ⎕OFF ⍵}
+
+ :Trap SSGDEBUG↓0
+     :If 1 1≢2↑m←2250⌶0
+         ⎕←'ERROR: .NET Core is not available, unable to send e-mail.'
+         ⎕←'       2250⌶0 returned ',m
+         Exit 12
+     :EndIf
+     InitGlobals
+     msg←SecurityMonitor INTERVAL
+     ⎕←msg
+     Exit 12
+ :Else
+     ⎕←'ERROR: Unexpected error in SSGMon'
+     ⎕←⎕JSON ⎕DMX
+     Exit 13
+ :EndTrap

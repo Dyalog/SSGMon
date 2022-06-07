@@ -1,0 +1,29 @@
+ (tn msg)←OpenLogFile LOGFILE;logdir;NL
+⍝ Return tie number and empty msg on success, else (0 message)
+ (tn msg)←0 ''
+ NL←⎕UCS 10
+
+ :If ⎕NEXISTS LOGFILE
+     :Trap 0
+         tn←LOGFILE ⎕FTIE 0
+     :Else
+         msg←'ERROR: error attempting to ⎕ftie LOGFILE ',LOGFILE,NL
+         msg,←⎕JSON ⎕DMX
+     :EndTrap
+ :Else
+     :Trap (~SSGDEBUG)/0
+         logdir←⊃1 ⎕NPARTS LOGFILE
+         ⍝ ROS points out that ⎕nexists⋄12⎕ninfo has a timing hole, so safer to trap error if logdir doesn't exist
+         :If ~12 ⎕NINFO logdir ⍝ 12: Is file/folder writable?
+             msg←'ERROR: Unable to write to existant log directory ',logdir
+         :EndIf
+     :Else
+         msg←'ERROR: log directory',logdir,' does not exist'
+     :EndTrap
+
+     tn←LOGFILE ⎕FCREATE 0
+     (1 3⍴0 ¯1 0)⎕FSTAC tn
+     ⎕←'Created log file "',LOGFILE,'"'
+     'Security Monitor Log File v1.0'⎕FAPPEND tn
+     (9⍴⊂'reserved')⎕FAPPEND¨tn
+ :EndIf

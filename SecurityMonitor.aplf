@@ -1,15 +1,17 @@
- {msg}←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues
- ⍝ Return text of e-mail to send to SSG.
- ⍝ start is the timestamp of the last run in (1 ⎕DT) format
+ r←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues
+ ⍝ Send SSGMon e-mail
+ ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report all open issues (weekly run)
  ⍝ if interval=0, issues modified since last run (regardless of status)
- ⍝ else issues modified in last "interval" days (regardless of status)
 
  subject←'Error' ⍝ If anything goes wrong en route
  :If ∨/m←0=≢¨MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN
-     msg←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN'
-     →SEND
+     r←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN'
+     →0
  :EndIf
+
+ (tn r)←OpenLogFile LOGFILE
+ →(0≠≢r)⍴0
 
  tsfmt←TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
  cols←'id' 'updated' 'status' 'reporter' 'summary'
@@ -25,15 +27,10 @@
 
  now←1 ⎕DT'Z' ⍝ Current UTC time
 
- :If ⎕NEXISTS LOGFILE
-     tn←LOGFILE ⎕FTIE 0
- :Else
-     tn←LOGFILE ⎕FCREATE 0
-     ⎕←'Created log file "',LOGFILE,'"'
-     'Security Monitor Log File v1.0'⎕FAPPEND tn
-     (9⍴⊂'reserved') ⎕FAPPEND¨tn
+ :If 11=2⊃⎕FSIZE tn ⍝ file with no data in it
      (now new)⎕FAPPEND tn
  :EndIf
+
 
  :If 2=⍴⍴old←⎕FREAD tn,cn←¯1+2⊃⎕FSIZE tn ⍝ if last comonent is a matrix
      then←2 1 ⎕DT 3⊃⎕FRDCI tn,cn         ⍝    ... then get timestamp from component information
