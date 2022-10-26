@@ -1,4 +1,4 @@
- r←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues
+ r←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues;timestamp
  ⍝ Send SSGMon e-mail
  ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report all open issues (weekly run)
@@ -51,12 +51,14 @@
      added←gone←0⌿new
      changed←(~new[;3]∊⊂'closed')⌿new
      subject←'List of All Open Security Issues'
+     timestamp←0⍴⊂''
 
  :Else    ⍝ Changes since last run
      added←(~new[;1]∊old[;1])⌿new
      gone←(~old[;1]∊new[;1])⌿old ⍝ disappeared from the list
      changed←(~(new[;1]∊added[;1],gone[;1])∨(↓new[;1 2])∊↓old[;1 2])⌿new
-     subject←'Changes since ',⊃tsfmt then
+     subject←'Recent changes'
+     timestamp←⊂'List of changes since ',⊃tsfmt then
 
  :EndSelect
 
@@ -66,6 +68,7 @@
      msg←msg,¨'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a>')
      msg←msg,¨', Security Related = '∘,¨tbl[;7]
      msg←msg,¨': '∘,¨tbl[;6]
+     msg,⍨←timestamp
      msg←∊msg,¨⊂'<br />'
  :Else
      msg←''
