@@ -1,4 +1,4 @@
- r←SecurityMonitor interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues;timestamp
+ r←DyalogSecurityIssues interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues;timestamp
  ⍝ Send SSGMon e-mail
  ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report all open issues (weekly run)
@@ -77,8 +77,4 @@
 SEND:
  :If 0≠≢msg
      SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
- :EndIf
-
- :If ~SSGDEBUG
-     ⎕OFF
  :EndIf

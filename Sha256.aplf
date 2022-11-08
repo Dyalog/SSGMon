@@ -1,0 +1,10 @@
+ r←Sha256 data;ctx;Init;Update;digest;Digest
+ 'Init'⎕NA' conga34ssl64|nettle_sha256_init >I1[112] '
+ 'Update'⎕NA'conga34ssl64|nettle_sha256_update =I1[112] U8 <T1[]'
+ 'Digest'⎕NA'conga34ssl64|nettle_sha256_digest =I1[112] U8 >I1[32]'
+
+ ctx←Init 112
+ ctx←Update ctx(⍴data)data
+ ctx digest←Digest ctx 32 32
+
+ r←digest

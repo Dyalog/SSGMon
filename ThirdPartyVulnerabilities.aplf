@@ -1,0 +1,67 @@
+ r←ThirdPartyVulnerabilities interval;subject;m;list;msg;tsfmt;summary;http;tpf;targets;update;i;target;url;rc;last;newhash;changed
+ ⍝ Send SSGMon e-mail regarding 3rd party vulnerabilities
+ ⍝ r is empty on success, else error message
+ ⍝ if interval=¯1, report last changed date for all monitored URLs
+ ⍝ if interval=0, any modified issues
+
+ r←''
+ subject←'Error' ⍝ If anything goes wrong en route
+ :If ∨/m←0=≢¨MAILSERVER MAILFROM MAILTO SMTPPASS THIRDPARTYFILE
+     r←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM MAILTO SMTPPASS THIRDPARTYFILE'
+     →0
+ :EndIf
+
+ msg←list←''
+ tsfmt←TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
+ summary←interval=¯1
+
+ ⍝ Initalize HttpCommand used in Watch
+ http←⎕NEW #.HttpCommand
+ http.URL←''
+ http.Command←'get'
+
+ tpf←⎕JSON ⊃⎕NGET THIRDPARTYFILE
+ targets←tpf.Targets
+ update←0
+
+ :For i :In ⍳≢targets
+     target←i⊃targets
+     http.URL←url←target.URL
+     rc←http.Run
+
+     :If rc.rc=0
+     :AndIf rc.HttpStatus=200
+         last←tsfmt target.LastChanged
+         url←'<a href="',url,'">',url,'</a>'
+         newhash←(⎕D,⎕A)[1+,⍉16 16⊤Sha256 ⎕UCS 'UTF-8' ⎕UCS rc.Data]
+         changed←target.Sha256≢'' ⍝ we KNOW it changed
+         :If target.Sha256≢newhash
+             msg,←⊂(changed/'Changed: '),url,' (last update ',last,')<br />'
+             :If changed ⍝ If hash actually changed, update the changed date (else leave as "unknown")
+                 target.LastChanged←1 ⎕DT 'Z'
+             :EndIf
+             target.Sha256←newhash
+             update←1
+         :EndIf
+         :If summary ⍝ produce list
+             list,←⊂url,' (last recorded update ',last,')<br />'
+         :EndIf
+     :Else
+         msg,←'<b>UNABLE to check ',url,': ',(⍕rc.(rc HttpStatus)),'</b><br />'
+     :EndIf
+ :EndFor
+
+ :If update
+     (⊂⎕JSON⍠'Compact' 0⊢tpf) ⎕NPUT THIRDPARTYFILE 1
+ :EndIf
+
+ subject←'Third Party Vulnerability Update',summary/' - With Overview'
+
+ :If summary
+     msg,←(⊂'<br />Third Party Vulnerability URLs monitored<br /><br />'),list
+ :EndIf
+
+SEND:
+ :If 0≠≢msg
+     SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
+ :EndIf

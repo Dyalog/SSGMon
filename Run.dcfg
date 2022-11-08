@@ -4,6 +4,7 @@
       DYALOG_NETCORE: 1,      
       SSG: {
          LOGFILE: "/tmp/security_issue_log.dcf",
+         THIRDPARTYFILE: "/tmp/third_party_urls.json",
          INTERVAL: -1, // Report All Security Issues 
                        // 0 means report changes since last run
          MAILSERVER: "mail.dyalog.com",

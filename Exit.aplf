@@ -1,0 +1,3 @@
+Exit code
+('Runtime would have exited with code ',⍕code)⎕SIGNAL SSGDEBUG/11
+⎕OFF code

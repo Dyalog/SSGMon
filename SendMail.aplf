@@ -14,6 +14,6 @@ SendMail (mailserver sender password recipient subject body);smtp;M;⎕USING
   smtp.Port←26
   smtp.Credentials←⎕NEW NetworkCredential (sender password)
 
-  M←⎕NEW Mail.MailMessage(sender recipient subject body)
+  M←⎕NEW Mail.MailMessage(sender recipient subject (∊body))
   M.IsBodyHtml←1
   smtp.Send M
