@@ -5,7 +5,7 @@
 
 ⍝ From config files
  LOGFILE← '/tmp/security_issue_log.dcf' env 'SSG\LOGFILE'
- THIRDPARTYFILE←'/tmp/third_party_urls.json' env 'SSG\THIRDPARTYFILE'
+ THIRDPARTYFILE←'/tmp/ThirdPartyURLs.json' env 'SSG\THIRDPARTYFILE'
  INTERVAL←         ⎕JSON '-1' env 'SSG\INTERVAL' ⍝ Default: Report all issues
  MAILSERVER←'mail.dyalog.com' env 'SSG\MAILSERVER'
  MAILFROM← 'mkrom@dyalog.com' env 'SSG\MAILFROM'
