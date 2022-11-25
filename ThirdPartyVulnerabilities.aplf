@@ -53,15 +53,20 @@
 
  :If update
      (⊂⎕JSON⍠'Compact' 0⊢tpf) ⎕NPUT THIRDPARTYFILE 1
+     ⎕←'Updated 3rd party json file'
  :EndIf
 
  subject←'Third Party Vulnerability Update',summary/' - With Overview'
 
  :If summary
      msg,←(⊂'<br />Third Party Vulnerability URLs monitored<br /><br />'),list
+     ⎕←'Checked 3rd party vulnerability URLS'
  :EndIf
 
 SEND:
  :If 0≠≢msg
+     ⎕←'About to send 3rd party vulnerablility check list'
      SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
+     ⎕←'Sent 3rd party vulnerablility check list:'subject
+     ⎕←msg
  :EndIf

@@ -76,5 +76,8 @@
 
 SEND:
  :If 0≠≢msg
+     ⎕←'About to send security vulnerabilities email'
      SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
+     ⎕←'Sent security vulnerabilities email: ' subject
+     ⎕←msg
  :EndIf
