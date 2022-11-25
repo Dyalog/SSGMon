@@ -15,7 +15,7 @@
      InitGlobals
      :If 0≠≢msg←DyalogSecurityIssues INTERVAL ⋄ ⎕←msg ⋄ :EndIf
      :If 0≠≢msg←ThirdPartyVulnerabilities INTERVAL ⋄ ⎕←msg ⋄ :EndIf
-     Exit 12
+     Exit 10
  :Else
 
      ⎕←'ERROR: Unexpected error in SSGMon'
