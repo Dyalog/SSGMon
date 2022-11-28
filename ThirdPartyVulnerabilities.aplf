@@ -1,4 +1,4 @@
- r←ThirdPartyVulnerabilities interval;subject;m;list;msg;tsfmt;summary;http;tpf;targets;update;i;target;url;rc;last;newhash;changed
+﻿ r←ThirdPartyVulnerabilities interval;subject;m;list;msg;tsfmt;summary;http;tpf;targets;update;i;target;url;rc;last;newhash;changed;body
  ⍝ Send SSGMon e-mail regarding 3rd party vulnerabilities
  ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report last changed date for all monitored URLs
@@ -7,7 +7,7 @@
  r←''
  subject←'Error' ⍝ If anything goes wrong en route
  :If ∨/m←0=≢¨MAILSERVER MAILFROM MAILTO SMTPPASS THIRDPARTYFILE
-     r←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM MAILTO SMTPPASS THIRDPARTYFILE'
+     r←'Missing configuration: ',⍕m/' '(=⊂⊢)' MAILSERVER MAILFROM MAILTO SMTPPASS THIRDPARTYFILE'
      →0
  :EndIf
 
@@ -20,7 +20,7 @@
  http.URL←''
  http.Command←'get'
 
- tpf←⎕JSON ⊃⎕NGET THIRDPARTYFILE
+ tpf←⎕JSON⊃⎕NGET THIRDPARTYFILE
  targets←tpf.Targets
  update←0
 
@@ -33,12 +33,16 @@
      :AndIf rc.HttpStatus=200
          last←tsfmt target.LastChanged
          url←'<a href="',url,'">',url,'</a>'
-         newhash←(⎕D,⎕A)[1+,⍉16 16⊤Sha256 ⎕UCS 'UTF-8' ⎕UCS rc.Data]
+         ⍝ This is an attempt to cope with pages which are ?cached?load balanced? so may not have the same
+         ⍝ source twice running, even though the page has effectively not changed.
+         ⍝ More may be needed to be done.
+         body←⊃('<body(.*)/body>'⎕S'\1'⎕OPT('Mode' 'M')('DotAll' 1))⊢rc.Data
+         newhash←(⎕D,⎕A)[1+,⍉16 16⊤Sha256 ⎕UCS'UTF-8'⎕UCS body]
          changed←target.Sha256≢'' ⍝ we KNOW it changed
          :If target.Sha256≢newhash
              msg,←⊂(changed/'Changed: '),url,' (last update ',last,')<br />'
              :If changed ⍝ If hash actually changed, update the changed date (else leave as "unknown")
-                 target.LastChanged←1 ⎕DT 'Z'
+                 target.LastChanged←1 ⎕DT'Z'
              :EndIf
              target.Sha256←newhash
              update←1
@@ -52,7 +56,7 @@
  :EndFor
 
  :If update
-     (⊂⎕JSON⍠'Compact' 0⊢tpf) ⎕NPUT THIRDPARTYFILE 1
+     (⊂⎕JSON⍠'Compact' 0⊢tpf) ⎕NPUT ⎕OPT'NEOL' 2⊢THIRDPARTYFILE 1
      ⎕←'Updated 3rd party json file'
  :EndIf
 
