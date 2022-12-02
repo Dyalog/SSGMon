@@ -5,12 +5,12 @@
 
 ⍝ From config files
  LOGFILE← '/tmp/security_issue_log.dcf' env 'SSG\LOGFILE'
+ THIRDPARTYFILE←'/tmp/ThirdPartyURLs.json' env 'SSG\THIRDPARTYFILE'
  INTERVAL←         ⎕JSON '-1' env 'SSG\INTERVAL' ⍝ Default: Report all issues
  MAILSERVER←'mail.dyalog.com' env 'SSG\MAILSERVER'
  MAILFROM← 'mkrom@dyalog.com' env 'SSG\MAILFROM'
  MAILTO←   'mkrom@dyalog.com' env 'SSG\MAILTO'
  SSGDEBUG←          ⎕JSON '0' env 'SSG\DEBUG'
-
 
 ⍝ From environment: DO NOT PUT THESE in config!
  SMTPPASS←                    env 'SMTP_PWD'

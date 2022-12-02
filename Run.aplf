@@ -2,6 +2,7 @@
 ⍝ Use Exit Code of 12 for expected failures,
 ⍝                  13 for global unexpected errors
 
+ ⎕PW←1000
  :If 0=⎕NC 'SSGDEBUG' ⋄ SSGDEBUG←0 ⋄ :EndIf
  Exit←{SSGDEBUG:('Runtime would have exited with code ',⍕⍵)⎕SIGNAL 11 ⋄ ⎕OFF ⍵}
 
@@ -12,11 +13,15 @@
          Exit 12
      :EndIf
      InitGlobals
-     msg←SecurityMonitor INTERVAL
-     ⎕←msg
-     Exit 12
+     :If 0≠≢msg←DyalogSecurityIssues INTERVAL ⋄ ⎕←msg ⋄ :EndIf
+     :If 0≠≢msg←ThirdPartyVulnerabilities INTERVAL ⋄ ⎕←msg ⋄ :EndIf
+     Exit 10
  :Else
+
      ⎕←'ERROR: Unexpected error in SSGMon'
-     ⎕←⎕JSON ⎕DMX
+     ⎕←⎕JSON⍠'Compact' 0⊢⎕DMX
+     :If ⎕EN=90
+         ⎕←⎕EXCEPTION
+     :EndIf
      Exit 13
  :EndTrap

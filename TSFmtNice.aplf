@@ -13,4 +13,8 @@
  :If 0≠⍴i←(1>|z)/⍳⍴ts
      r[i;]←((⍴i),16)⍴16↑'Now'
  :EndIf
+ :If 0≠⍴i←(ts=0)/⍳⍴ts
+     r[i;]←((⍴i),16)⍴16↑'Unknown'
+ :EndIf
+
  r←s⍴(+/∨\' '≠⌽r)↑¨↓r
