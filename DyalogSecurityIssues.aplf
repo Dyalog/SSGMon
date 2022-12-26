@@ -1,4 +1,4 @@
- r←DyalogSecurityIssues interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;nums;m;last;cn;added;changed;issues;timestamp
+ r←DyalogSecurityIssues interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;m;last;cn;added;changed;issues;timestamp;out;resolved;nums;rows;p;n;ignore;drop
  ⍝ Send SSGMon e-mail
  ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report all open issues (weekly run)
@@ -21,8 +21,10 @@
 
  ns←{⎕JSON MantisAPI 'issues?filter_id=',⍕⍵}¨f
  issues←⊃,/ns.issues
- new←↑issues.(id updated_at status.name reporter.name summary) ⍝ New Status
+ new←↑issues.(id updated_at status.name reporter.name summary)  ⍝ New Status
  new,←issues.(((custom_fields.(field.name))⍳⊂'Security Related')⊃custom_fields.value)
+ ignore←⊂'Fixed In n/a => n/a'
+ new,←{6↓∊'<br />'∘,¨ignore~⍨{⍵.message,' ',{0::'' ⋄ ⍵.change}⍵}¨⍵/⍨⍵.created_at∊((¯1↑⍵).created_at)}¨issues.history
  new[;2]←ISOtoDN¨new[;2] ⍝ ISO timestamps to UTC IDN
 
  now←1 ⎕DT'Z' ⍝ Current UTC time
@@ -40,12 +42,14 @@
      msg←'Invalid file format'
      →SEND
  :EndIf
+ old,←((≢old),(2⊃⍴new)-2⊃⍴old)⍴⊂''       ⍝ Pad old result with new cols if necessary
 
  :If old[;1 2]≢new[;1 2]   ⍝ Something changed?
      (now new)⎕FAPPEND tn  ⍝ Write a new record
  :EndIf
  ⎕FUNTIE tn
 
+∘∘∘
  :Select interval
  :Case ¯1 ⍝ All open issues
      added←gone←0⌿new
@@ -56,20 +60,31 @@
  :Else    ⍝ Changes since last run
      added←(~new[;1]∊old[;1])⌿new
      gone←(~old[;1]∊new[;1])⌿old ⍝ disappeared from the list
-     changed←(~(new[;1]∊added[;1],gone[;1])∨(↓new[;1 2])∊↓old[;1 2])⌿new
+     changed←(~(new[;1]∊added[;1],gone[;1])∨(↓new[;1 3])∊↓old[;1 3])⌿new
      subject←'Recent changes'
      timestamp←⊂'List of changes since ',⊃tsfmt then
-
  :EndSelect
 
- :If 0≠≢tbl←⊃⍪/(⊂¨'<b>*NEW*</b>' 'Updated' 'Removed'),¨added changed gone
-     nums←⍕¨tbl[;2] ⍝ Now create Mantis Links
-     msg←tbl[;1],¨' ',¨(tsfmt tbl[;3]),¨⊂': '
-     msg←msg,¨'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a>')
-     msg←msg,¨', Security Related = '∘,¨tbl[;7]
-     msg←msg,¨': '∘,¨tbl[;6]
-     msg,⍨←timestamp
-     msg←∊msg,¨⊂'<br />'
+ :If 0≠≢tbl←⊃⍪/(⊂¨'<b>*NEW*</b>' ((interval≢¯1)/'Updated') 'Removed'),¨added changed gone
+
+     out←tbl[⍋tbl[;4]∊⊂'resolved';2 7 1 4 8 3 6] ⍝ Move resolved issues to the end
+
+     nums←⍕¨out[;1]
+     out←0 1↓out
+     cols←'' '' 'Status' 'Last Change' 'Timestamp' 'Description' ⍝ 1st 2: Action & Not Sure
+     out[;3]←(1 ⎕C 1↑¨out[;3]),¨1↓¨out[;3] ⍝ Capitalise Status
+     out[;4]←out[;4],¨'&nbsp &nbsp <br />'∘,¨tsfmt out[;5]
+     out[;5]←⊂''
+     out[;1]←('' '<b>*NOT SURE*</b>')[1+out[;1]∊⊂'Not sure']
+     rows←'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a>')
+
+     :If (n←≢out)>p←¯1+⊃out[;3]⍳⊂'Resolved'
+         rows←(drop←2×p=0)↓(p↑rows),'' '<b>Resolved:</b>',p↓rows
+         out←drop↓(p 2 (n-p)/1 0 1)⍀out
+     :EndIf
+
+     m←~∧⌿out∊⊂'' ⍝ mask out empty cols
+     msg←∊HtmlTable rows (m/cols) ((⍕¨m/out),¨⊂'&nbsp &nbsp')
  :Else
      msg←''
  :EndIf
