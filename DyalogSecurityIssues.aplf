@@ -1,4 +1,4 @@
- r←DyalogSecurityIssues interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;m;last;cn;added;changed;issues;timestamp;out;resolved;nums;rows;p;n;ignore;drop
+ r←DyalogSecurityIssues interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;m;last;cn;added;changed;issues;timestamp;out;resolved;nums;rows;p;n;ignore;drop;size;fileok
  ⍝ Send SSGMon e-mail
  ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report all open issues (weekly run)
@@ -33,21 +33,16 @@
      (now new)⎕FAPPEND tn
  :EndIf
 
-
  :If 2=⍴⍴old←⎕FREAD tn,cn←¯1+2⊃⎕FSIZE tn ⍝ if last comonent is a matrix
      then←2 1 ⎕DT 3⊃⎕FRDCI tn,cn         ⍝    ... then get timestamp from component information
  :ElseIf 2=⍴old
      (then old)←old                      ⍝ ... else component should contain timestamp and data
  :Else
      msg←'Invalid file format'
-     →SEND
+     →SEND⊣fileok←0
  :EndIf
+ fileok←1
  old,←((≢old),(2⊃⍴new)-2⊃⍴old)⍴⊂''       ⍝ Pad old result with new cols if necessary
-
- :If old[;1 2]≢new[;1 2]   ⍝ Something changed?
-     (now new)⎕FAPPEND tn  ⍝ Write a new record
- :EndIf
- ⎕FUNTIE tn
 
  :Select interval
  :Case ¯1 ⍝ All open issues
@@ -84,6 +79,10 @@
 
      m←~∧⌿out∊⊂'' ⍝ mask out empty cols
      msg←∊HtmlTable rows (m/cols) ((⍕¨m/out),¨⊂'&nbsp &nbsp')
+     :If interval=¯1
+         size←⎕FSIZE tn
+         msg,←'<br /><br />Log file size is ',(2⍕1E6÷⍨3⊃size),'Mb (',(⍕--/2↑size),' components)'
+     :EndIf
  :Else
      msg←''
  :EndIf
@@ -95,3 +94,9 @@ SEND:
      ⎕←'Sent security vulnerabilities email: ' subject
      ⎕←msg
  :EndIf
+
+ :If fileok
+ :AndIf old[;1 2]≢new[;1 2] ⍝ Something changed?
+     (now new)⎕FAPPEND tn   ⍝ Write a new record
+ :EndIf
+ ⎕FUNTIE tn
