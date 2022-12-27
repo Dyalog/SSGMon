@@ -13,7 +13,6 @@
  (tn r)←OpenLogFile LOGFILE
  →(0≠≢r)⍴0
 
- tsfmt←TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
  cols←'id' 'updated' 'status' 'reporter' 'summary'
 
  f←(⎕JSON MantisAPI'filters').filters.(id name)
@@ -27,7 +26,8 @@
  new,←{6↓∊'<br />'∘,¨ignore~⍨{⍵.message,' ',{0::'' ⋄ ⍵.change}⍵}¨⍵/⍨⍵.created_at∊((¯1↑⍵).created_at)}¨issues.history
  new[;2]←ISOtoDN¨new[;2] ⍝ ISO timestamps to UTC IDN
 
- now←1 ⎕DT'Z' ⍝ Current UTC time
+ now←1 ⎕DT'Z' ⍝ Server time is UTC
+ tsfmt←now∘TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
 
  :If 11=2⊃⎕FSIZE tn ⍝ file with no data in it
      (now new)⎕FAPPEND tn
@@ -49,7 +49,6 @@
  :EndIf
  ⎕FUNTIE tn
 
-∘∘∘
  :Select interval
  :Case ¯1 ⍝ All open issues
      added←gone←0⌿new
