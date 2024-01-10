@@ -1,0 +1,41 @@
+ HTML←{ALIGN}HtmlTable RCV;ROWTITLES;COLTITLES;VALUES;CRLF;TAB;class
+ ⍝ LEFT|RIGHT|CENTER HTMLTable RowTitles ColTitles Data
+
+ class←''
+ CRLF←⎕UCS 13 10
+
+ :If 0=⎕NC'ALIGN'
+     ALIGN←'left'
+ :EndIf
+
+ (ROWTITLES COLTITLES VALUES)←RCV
+ :If 1=≡ALIGN
+     VALUES←(⊂'<td ',class,' align="',ALIGN,'" valign="top" nowrap>'),¨VALUES,¨(⊂'</td>',CRLF)
+ :Else
+     ALIGN←(⍴VALUES)⍴ALIGN
+     VALUES←(⊂'<td ',class,' align="'),¨ALIGN,¨(⊂'" nowrap>'),¨VALUES,¨(⊂'</td>',CRLF)
+ :EndIf
+
+ HTML←'<table cellspacing=1 cellpadding=1 >',CRLF
+ HTML,←'<tr>',CRLF
+
+ :If ''≢COLTITLES
+ :AndIf ''≢ROWTITLES
+     HTML,←'<th ',class,' align="left">&nbsp;</th>',CRLF
+ :EndIf
+
+ :If ''≢COLTITLES
+     COLTITLES←(⊂'<th ',class,' align="left" valign="top" nowrap>'),¨COLTITLES,¨(⊂'</th>',CRLF)
+     HTML,←∊COLTITLES
+ :EndIf
+
+ HTML,←'</tr>',CRLF
+
+ :If ROWTITLES≡''
+     HTML,←∊(⊂'<tr>',CRLF),VALUES,⊂'</tr>',CRLF
+ :Else
+     ROWTITLES←(⊂'<th ',class,' align="left" valign="top" nowrap>'),¨ROWTITLES,¨(⊂'</th>',CRLF)
+     HTML,←∊(⊂'<tr>',CRLF),ROWTITLES,VALUES,⊂'</tr>',CRLF
+ :EndIf
+
+ HTML,←'</table>',CRLF
