@@ -1,4 +1,4 @@
- r←DyalogSecurityIssues interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;m;last;cn;added;changed;issues;timestamp;out;resolved;nums;rows;p;n;ignore;drop;size;fileok
+ r←DyalogSecurityIssues interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;m;last;cn;added;changed;issues;timestamp;out;resolved;nums;rows;p;n;ignore;drop;size;fileok;ix
  ⍝ Send SSGMon e-mail
  ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report all open issues (weekly run)
@@ -61,7 +61,7 @@
 
  :If 0≠≢tbl←⊃⍪/(⊂¨'<b>*NEW*</b>' ((interval≢¯1)/'Updated') 'Removed'),¨added changed gone
 
-     out←tbl[⍋tbl[;4]∊⊂'resolved';2 7 1 4 8 3 6] ⍝ Move resolved issues to the end
+     out←tbl[ix←⍋tbl[;4]∊⊂'resolved';2 7 1 4 8 3 6] ⍝ Move resolved issues to the end
 
      nums←⍕¨out[;1]
      out←0 1↓out
@@ -69,12 +69,14 @@
      out[;3]←(1 ⎕C 1↑¨out[;3]),¨1↓¨out[;3] ⍝ Capitalise Status
      out[;4]←out[;4],¨'&nbsp &nbsp <br />'∘,¨tsfmt out[;5]
      out[;5]←⊂''
-     out[;1]←('' '<b>*NOT SURE*</b>')[1+out[;1]∊⊂'Not sure']
+     out[;1]←('' '<b>*NOT SURE*</b><br />')[1+out[;1]∊⊂'Not sure']
+     out[;1]←out[;1],¨' ('∘,¨tbl[ix;5],¨')'
      rows←'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a>')
 
      :If (n←≢out)>p←¯1+⊃out[;3]⍳⊂'Resolved'
          rows←(drop←2×p=0)↓(p↑rows),'' '<b>Resolved:</b>',p↓rows
          out←drop↓(p 2 (n-p)/1 0 1)⍀out
+         out[;5]←⊂''
      :EndIf
 
      m←~∧⌿out∊⊂'' ⍝ mask out empty cols
@@ -92,7 +94,6 @@ SEND:
      ⎕←'About to send security vulnerabilities email'
      SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
      ⎕←'Sent security vulnerabilities email: ' subject
-     ⎕←msg
  :EndIf
 
  :If fileok
