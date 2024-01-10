@@ -1,8 +1,11 @@
-﻿ r←ThirdPartyVulnerabilities interval;subject;m;list;msg;tsfmt;summary;http;tpf;targets;update;i;target;url;rc;last;newhash;changed;body
+ r←ThirdPartyVulnerabilities interval;subject;m;list;msg;tsfmt;summary;http;tpf;targets;update;i;target;url;rc;last;newhash;changed;body;retried;max_tries;delay
  ⍝ Send SSGMon e-mail regarding 3rd party vulnerabilities
  ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report last changed date for all monitored URLs
  ⍝ if interval=0, any modified issues
+
+ max_tries←5 ⍝ Maximum number of attempts on timeout
+ delay←60    ⍝ Delay between tries
 
  r←''
  subject←'Error' ⍝ If anything goes wrong en route
@@ -19,6 +22,7 @@
  http←⎕NEW #.HttpCommand
  http.URL←''
  http.Command←'get'
+ http.Timeout←30000 ⍝ (HttpCommand default is 5000)
 
  tpf←⎕JSON⊃⎕NGET THIRDPARTYFILE
  targets←tpf.Targets
@@ -27,6 +31,8 @@
  :For i :In ⍳≢targets
      target←i⊃targets
      http.URL←url←target.URL
+     retried←0
+    RETRY:
      rc←http.Run
 
      :If rc.rc=0
@@ -49,6 +55,13 @@
          :EndIf
          :If summary ⍝ produce list
              list,←⊂url,' (last recorded update ',last,')<br />'
+         :EndIf
+     :ElseIf rc.rc=100 ⍝ Timeout
+         msg,←'<b>Timed out: ',url,'</b><br />'
+         retried+←1
+         :If retried<max_tries
+            ⎕DL delay
+            →RETRY
          :EndIf
      :Else
          msg,←'<b>UNABLE to check ',url,': ',(⍕rc.(rc HttpStatus)),'</b><br />'
