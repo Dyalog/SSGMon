@@ -1,19 +1,24 @@
- r←ThirdPartyVulnerabilities interval;subject;m;list;msg;tsfmt;summary;http;tpf;targets;update;i;target;url;rc;last;newhash;changed;body;retried;max_tries;delay
+ r←ThirdPartyVulnerabilities interval;subject;m;list;msg;tsfmt;summary;http;tpf;targets;i;target;url;rc;last;newhash;changed;body;retried;max_tries;delay;config;cpes;urls;cpe;usecpe;lastfile;lastts;ns;cve;ts;dates;since;t;data;more;havelast
  ⍝ Send SSGMon e-mail regarding 3rd party vulnerabilities
  ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report last changed date for all monitored URLs
  ⍝ if interval=0, any modified issues
 
- max_tries←5 ⍝ Maximum number of attempts on timeout
- delay←60    ⍝ Delay between tries
+ max_tries←10 ⍝ Maximum number of attempts on timeout
+ delay←30     ⍝ Delay between tries
 
  r←''
  subject←'Error' ⍝ If anything goes wrong en route
- :If ∨/m←0=≢¨MAILSERVER MAILFROM MAILTO SMTPPASS THIRDPARTYFILE
-     r←'Missing configuration: ',⍕m/' '(=⊂⊢)' MAILSERVER MAILFROM MAILTO SMTPPASS THIRDPARTYFILE'
+ :If ∨/m←0=≢¨MAILSERVER MAILFROM MAILTO SMTPPASS DATABASE
+     r←'Missing configuration: ',⍕m/' '(=⊂⊢)' MAILSERVER MAILFROM MAILTO SMTPPASS DATABASE'
      →0
  :EndIf
-
+ :If ~⎕NEXISTS MONITORCFG
+     r←'Cannot find monitor configuration file "',MONITORCFG,'"'
+     →0
+ :EndIf
+ tpf←⎕CSV MONITORCFG
+ (targets cpes urls)←↓⍉{⍵[⍋⎕C ⍵[;1];]}1↓tpf[;(⎕C tpf[1;])⍳'component' 'cpe' 'url']
  msg←list←''
  tsfmt←TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
  summary←interval=¯1
@@ -24,59 +29,95 @@
  http.Command←'get'
  http.Timeout←30000 ⍝ (HttpCommand default is 5000)
 
- tpf←⎕JSON⊃⎕NGET THIRDPARTYFILE
- targets←tpf.Targets
- update←0
+ :For (target cpe url) :InEach targets cpes urls
+     :If usecpe←0≠≢cpe
+         http.URL←url←'https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName=cpe:2.3:',cpe,14⍴':*'
+     :Else
+         http.URL←'https://',url
+     :EndIf
 
- :For i :In ⍳≢targets
-     target←i⊃targets
-     http.URL←url←target.URL
      retried←0
-    RETRY:
+RETRY:
      rc←http.Run
 
      :If rc.rc=0
      :AndIf rc.HttpStatus=200
-         last←tsfmt target.LastChanged
-         url←'<a href="',url,'">',url,'</a>'
-         ⍝ This is an attempt to cope with pages which are ?cached?load balanced? so may not have the same
-         ⍝ source twice running, even though the page has effectively not changed.
-         ⍝ More may be needed to be done.
-         body←⊃('<body(.*)/body>'⎕S'\1'⎕OPT('Mode' 'M')('DotAll' 1))⊢rc.Data
-         newhash←(⎕D,⎕A)[1+,⍉16 16⊤Sha256 ⎕UCS'UTF-8'⎕UCS body]
-         changed←target.Sha256≢'' ⍝ we KNOW it changed
-         :If target.Sha256≢newhash
-             msg,←⊂(changed/'Changed: '),url,' (last update ',last,')<br />'
-             :If changed ⍝ If hash actually changed, update the changed date (else leave as "unknown")
-                 target.LastChanged←1 ⎕DT'Z'
+         :If ⎕NEXISTS lastfile←DATABASE,'/',target,'.last.',(1+usecpe)⊃'html' 'json'
+             last←⊃⎕NGET lastfile
+             lastts←⊃¯1 ⎕DT ⊃13 ⎕NINFO lastfile
+         :Else
+             (last lastts)←''(7⍴0)
+         :EndIf
+
+         :If havelast←lastts∨.≠0
+             since←tsfmt 1 ⎕DT⊂lastts
+         :Else
+             since←'(no previous run found)'
+         :EndIf
+
+         :If usecpe
+             ns←0 ⎕JSON data←rc.Data
+             :If 0≠ns.totalResults
+                 cve←{⍵[⍒⍵;]}↑(ns.vulnerabilities).cve.(lastModified id(⊃descriptions).value)
+                 more←3<≢cve
+                 cve←(3⌊≢cve)↑cve
+                 cve[;3]←{(1⍳⍨'. '⍷⍵)↑⍵}¨cve[;3]
+                 cve[;2]←{'<a href="https://nvd.nist.gov/vuln/detail/',⍵,'">',⍵,'</a>'}¨cve[;2]
+                 ts←2⊃⎕VFI,' ',(↑cve[;1])[;1 2 3 4 6 7 9 10 12 13 15 16 18 19]
+                 dates←tsfmt 1 ⎕DT↓⍉((10000,5⍴100)⊤ts)⍪0
+             :Else
+                 cve←0 3⍴⊂'' ⋄ ts←dates←⍬
              :EndIf
-             target.Sha256←newhash
-             update←1
+             :If changed←∨/m←ts>100⊥¯1↓lastts
+                 (ts cve)←m∘⌿¨ts cve
+                 t←'<br /><br /><b>',target,':</b> ',(more/'last 3 '),' updates ',(havelast/'since '),since
+                 msg,←(⊂t),'<br />'∘,¨↓⍕dates,0 1↓cve
+             :EndIf
+             :If summary
+                 :If 0=≢cve
+                     list,←⊂'<b>',target,':</b> No CPE records found<br />'
+                 :Else
+                     list,←⊂'<b>',target,':</b> Last update at ',((⊃dates),': ',⍕,⊃cve[;2]),'<br />'
+                 :EndIf
+             :EndIf
+
+         :Else ⍝ No CPE, using a URL - assume it is a GitHub advisory page
+             url←'<a href="',url,'">',url,'</a>'
+             body←⊃('<body(.*)/body>'⎕S'\1'⎕OPT('Mode' 'M')('DotAll' 1))⊢rc.Data
+             :If 0=≢t←(¯1+1⍳⍨'<div id="advisories">'⍷body)↓body
+                 msg,←target,': Unable to find advisories div in ',url
+             :Else
+                 data←t↑⍨5+0⍳⍨+\('<div'⍷t)-'</div'⍷t
+
+                 :If changed←last≢data,⎕UCS 10
+                     msg,←⊂'<br /><br /><b>',target,':</b> ',(havelast/'Changed: '),url,' ',(havelast/', Last update '),since
+                 :EndIf
+                 :If summary ⍝ produce list
+                     list,←⊂'<b>',target,':</b> ',(havelast/'Last update '),since,', url=',url,')<br />'
+                 :EndIf
+             :EndIf
          :EndIf
-         :If summary ⍝ produce list
-             list,←⊂url,' (last recorded update ',last,')<br />'
+
+         :If changed
+             (⊂data)⎕NPUT lastfile 1
          :EndIf
-     :ElseIf rc.rc=100 ⍝ Timeout
-         msg,←'<b>Timed out: ',url,'</b><br />'
+
+     :ElseIf (rc.rc=100)∨rc.HttpStatus=403 ⍝ Timeout / Unavailable
          retried+←1
+         ⎕←'Retrying (',(⍕rc.(rc HttpStatus)),'): ',url
          :If retried<max_tries
-            ⎕DL delay
-            →RETRY
+             ⎕DL delay
+             →RETRY
          :EndIf
      :Else
-         msg,←'<b>UNABLE to check ',url,': ',(⍕rc.(rc HttpStatus)),'</b><br />'
+         msg,←⊂'<br /><br /><b>',target,': <font color=red>UNABLE to check</font> ',url,': ',(⍕rc.(rc HttpStatus)),'</b><br />'
      :EndIf
  :EndFor
-
- :If update
-     (⊂⎕JSON⍠'Compact' 0⊢tpf) ⎕NPUT ⎕OPT'NEOL' 2⊢THIRDPARTYFILE 1
-     ⎕←'Updated 3rd party json file'
- :EndIf
 
  subject←'Third Party Vulnerability Update',summary/' - With Overview'
 
  :If summary
-     msg,←(⊂'<br />Third Party Vulnerability URLs monitored<br /><br />'),list
+     msg←(⊂'<b>OVERVIEW</b><br /><br />'),list,(1+0≠≢msg)⊃'<br /><b>(No recent updates)</b>' ('<br /><b>RECENT UPDATES</b>',msg)
      ⎕←'Checked 3rd party vulnerability URLS'
  :EndIf
 

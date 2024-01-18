@@ -1,0 +1,10 @@
+{// Default/development SSG configuration file
+ // Set SSG_CONFIG env var to use a different configuration
+ // Or set any of the following parameters in ENV vars or command line to override
+  DATABASE:    "DevDb",
+  INTERVAL: -1, // Report All Security Issues 
+                // 0 means report changes since last run
+  MAILSERVER: "mail.dyalog.com",
+  MAILFROM:   "mkrom@dyalog.com", // nightly@dyalog.com in production
+  MAILTO:     "mkrom@dyalog.com", // ssg@dyalog.com
+}

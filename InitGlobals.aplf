@@ -1,17 +1,30 @@
- InitGlobals;env
+ InitGlobals;env;dir;configfile;cfg;root;config
 ⍝ Initialise control variables
 
  env←{⍺←'' ⋄ 0=≢r←2 ⎕NQ'.' 'GetEnvironment'⍵:⍺ ⋄ r}
+ cfg←{⍺←'' ⋄ 0=config.⎕NC ⍵:⍺ ⋄ config⍎⍵}
 
 ⍝ From config files
- LOGFILE← '/tmp/security_issue_log.dcf' env 'SSG\LOGFILE'
- THIRDPARTYFILE←'/tmp/ThirdPartyURLs.json' env 'SSG\THIRDPARTYFILE'
- INTERVAL←         ⎕JSON '-1' env 'SSG\INTERVAL' ⍝ Default: Report all issues
- MAILSERVER←'mail.dyalog.com' env 'SSG\MAILSERVER'
- MAILFROM← 'mkrom@dyalog.com' env 'SSG\MAILFROM'
- MAILTO←   'mkrom@dyalog.com' env 'SSG\MAILTO'
- SSGDEBUG←          ⎕JSON '0' env 'SSG\DEBUG'
+ root←⊃⎕NPARTS 4⊃5179⌶⊃⎕SI
+ configfile←(root,'DevConfig.dcfg') env 'SSGMON_CONFIGFILE'
+ :If ~⎕NEXISTS configfile
+     ⎕←'Unable to find configuration file "',configfile,'"'
+     Exit 12
+ :EndIf
+
+
+ config←0 ⎕JSON⍠'Dialect' 'JSON5'⊣⊃⎕NGET configfile
+
+ DATABASE←            'DevDb' cfg 'DATABASE'
+ INTERVAL←                 ¯1 cfg 'INTERVAL' ⍝ Default: Report all issues
+ MAILSERVER←'mail.dyalog.com' cfg 'MAILSERVER'
+ MAILFROM← 'mkrom@dyalog.com' cfg 'MAILFROM'
+ MAILTO←   'mkrom@dyalog.com' cfg 'MAILTO'
+ SSGDEBUG←          ⎕JSON '0' cfg 'DEBUG'
+ MONITORCFG←root,'MonitorConfig.csv'
 
 ⍝ From environment: DO NOT PUT THESE in config!
  SMTPPASS←                    env 'SMTP_PWD'
  MANTISAPITOKEN←              env 'MANTIS_TKN'
+
+ DATABASE←((~∨/'/\:'∊2↑DATABASE)/root),DATABASE

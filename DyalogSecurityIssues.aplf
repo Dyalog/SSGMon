@@ -5,12 +5,12 @@
  ⍝ if interval=0, issues modified since last run (regardless of status)
 
  subject←'Error' ⍝ If anything goes wrong en route
- :If ∨/m←0=≢¨MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN
+ :If ∨/m←0=≢¨MAILSERVER MAILFROM SMTPPASS MAILTO DATABASE SMTPPASS MANTISAPITOKEN
      r←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN'
      →0
  :EndIf
 
- (tn r)←OpenLogFile LOGFILE
+ (tn r)←OpenLogFile LOGFILE←DATABASE,'/SecurityIssueLog.dcf'
  →(0≠≢r)⍴0
 
  cols←'id' 'updated' 'status' 'reporter' 'summary'
