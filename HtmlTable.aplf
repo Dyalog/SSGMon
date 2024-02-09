@@ -1,8 +1,9 @@
- HTML←{ALIGN}HtmlTable RCV;ROWTITLES;COLTITLES;VALUES;CRLF;TAB;class
+ HTML←{ALIGN}HtmlTable RCV;ROWTITLES;COLTITLES;VALUES;CRLF;TAB;class;colours;c;tr;thstyle
  ⍝ LEFT|RIGHT|CENTER HTMLTable RowTitles ColTitles Data
 
  class←''
  CRLF←⎕UCS 13 10
+ colours←'#d8edeb' '#f5fcfc'
 
  :If 0=⎕NC'ALIGN'
      ALIGN←'left'
@@ -12,30 +13,31 @@
  :If 1=≡ALIGN
      VALUES←(⊂'<td ',class,' align="',ALIGN,'" valign="top" nowrap>'),¨VALUES,¨(⊂'</td>',CRLF)
  :Else
-     ALIGN←(⍴VALUES)⍴ALIGN
+     ALIGN←(⍴VALUES)⍴ALIGN                                                                            247
      VALUES←(⊂'<td ',class,' align="'),¨ALIGN,¨(⊂'" nowrap>'),¨VALUES,¨(⊂'</td>',CRLF)
  :EndIf
 
  HTML←'<table cellspacing=1 cellpadding=1 >',CRLF
- HTML,←'<tr>',CRLF
+ thstyle←' style="background-color:',(2⊃colours),'"'
 
  :If ''≢COLTITLES
  :AndIf ''≢ROWTITLES
-     HTML,←'<th ',class,' align="left">&nbsp;</th>',CRLF
+     HTML,←'<th ',class,' align="left"',thstyle,'>&nbsp;</th>',CRLF
  :EndIf
 
  :If ''≢COLTITLES
-     COLTITLES←(⊂'<th ',class,' align="left" valign="top" nowrap>'),¨COLTITLES,¨(⊂'</th>',CRLF)
+     COLTITLES←(⊂'<th ',class,' align="left" valign="top" nowrap',thstyle,'>'),¨COLTITLES,¨(⊂'</th>',CRLF)
      HTML,←∊COLTITLES
  :EndIf
 
  HTML,←'</tr>',CRLF
 
+ tr←'<tr style="background-color:'∘,¨((≢VALUES)⍴colours),¨⊂'">',CRLF
  :If ROWTITLES≡''
-     HTML,←∊(⊂'<tr>',CRLF),VALUES,⊂'</tr>',CRLF
+     HTML,←∊tr,VALUES,⊂'</tr>',CRLF
  :Else
      ROWTITLES←(⊂'<th ',class,' align="left" valign="top" nowrap>'),¨ROWTITLES,¨(⊂'</th>',CRLF)
-     HTML,←∊(⊂'<tr>',CRLF),ROWTITLES,VALUES,⊂'</tr>',CRLF
+     HTML,←∊tr,ROWTITLES,VALUES,⊂'</tr>',CRLF
  :EndIf
 
  HTML,←'</table>',CRLF
