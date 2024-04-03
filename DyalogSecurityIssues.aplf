@@ -1,16 +1,16 @@
- r←DyalogSecurityIssues interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;m;last;cn;added;changed;issues;timestamp;out;resolved;nums;rows;p;n;ignore;drop;size;fileok
+ r←DyalogSecurityIssues interval;f;i;new;cols;old;tn;now;then;msg;subject;ns;tbl;tsfmt;gone;when;m;last;cn;added;changed;issues;timestamp;out;resolved;nums;rows;p;n;ignore;drop;size;fileok;ix
  ⍝ Send SSGMon e-mail
  ⍝ r is empty on success, else error message
  ⍝ if interval=¯1, report all open issues (weekly run)
  ⍝ if interval=0, issues modified since last run (regardless of status)
 
  subject←'Error' ⍝ If anything goes wrong en route
- :If ∨/m←0=≢¨MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN
+ :If ∨/m←0=≢¨MAILSERVER MAILFROM SMTPPASS MAILTO DATABASE SMTPPASS MANTISAPITOKEN
      r←'Missing configuration: ',⍕m/' '(=⊂⊢) ' MAILSERVER MAILFROM SMTPPASS MAILTO LOGFILE SMTPPASS MANTISAPITOKEN'
      →0
  :EndIf
 
- (tn r)←OpenLogFile LOGFILE
+ (tn r)←OpenLogFile LOGFILE←DATABASE,'/SecurityIssueLog.dcf'
  →(0≠≢r)⍴0
 
  cols←'id' 'updated' 'status' 'reporter' 'summary'
@@ -24,7 +24,8 @@
  new,←issues.(((custom_fields.(field.name))⍳⊂'Security Related')⊃custom_fields.value)
  ignore←⊂'Fixed In n/a => n/a'
  new,←{6↓∊'<br />'∘,¨ignore~⍨{⍵.message,' ',{0::'' ⋄ ⍵.change}⍵}¨⍵/⍨⍵.created_at∊((¯1↑⍵).created_at)}¨issues.history
- new[;2]←ISOtoDN¨new[;2] ⍝ ISO timestamps to UTC IDN
+ new,←↑issues.(created_at ({0::'' ⋄ handler.name}0))
+ new[;2 8]←ISOtoDN¨new[;2 8] ⍝ ISO timestamps to UTC IDN
 
  now←1 ⎕DT'Z' ⍝ Server time is UTC
  tsfmt←now∘TSFmtNice ⍝ Was 'Mmm DD hh:mm'∘(1200⌶)
@@ -61,20 +62,23 @@
 
  :If 0≠≢tbl←⊃⍪/(⊂¨'<b>*NEW*</b>' ((interval≢¯1)/'Updated') 'Removed'),¨added changed gone
 
-     out←tbl[⍋tbl[;4]∊⊂'resolved';2 7 1 4 8 3 6] ⍝ Move resolved issues to the end
+     out←tbl[ix←⍋tbl[;4]∊⊂'resolved';2 7 1 4 8 3 6] ⍝ Move resolved issues to the end
 
      nums←⍕¨out[;1]
      out←0 1↓out
      cols←'' '' 'Status' 'Last Change' 'Timestamp' 'Description' ⍝ 1st 2: Action & Not Sure
      out[;3]←(1 ⎕C 1↑¨out[;3]),¨1↓¨out[;3] ⍝ Capitalise Status
+     out[;3]←out[;3]
      out[;4]←out[;4],¨'&nbsp &nbsp <br />'∘,¨tsfmt out[;5]
      out[;5]←⊂''
-     out[;1]←('' '<b>*NOT SURE*</b>')[1+out[;1]∊⊂'Not sure']
+     out[;1]←tbl[ix;5],¨' ',¨(tsfmt tbl[ix;9]),¨('' '<br /><b>*NOT SURE*</b>')[1+out[;1]∊⊂'Not sure']
+     out[;1]←out[;1],¨{(×≢⍵)/'<br /> Assigned ',⍵}¨tbl[ix;10]    ⍝ Add Handler.name
      rows←'<a href="https://mantis.dyalog.com/view.php?id='∘,¨nums,¨(⊂'">'),¨nums,¨(⊂'</a>')
 
      :If (n←≢out)>p←¯1+⊃out[;3]⍳⊂'Resolved'
          rows←(drop←2×p=0)↓(p↑rows),'' '<b>Resolved:</b>',p↓rows
          out←drop↓(p 2 (n-p)/1 0 1)⍀out
+         out[;5]←⊂''
      :EndIf
 
      m←~∧⌿out∊⊂'' ⍝ mask out empty cols
@@ -89,10 +93,9 @@
 
 SEND:
  :If 0≠≢msg
-     ⎕←'About to send security vulnerabilities email'
+     ⎕←'About to send security issues email'
      SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
-     ⎕←'Sent security vulnerabilities email: ' subject
-     ⎕←msg
+     ⎕←'Sent security issues email: ' subject
  :EndIf
 
  :If fileok
