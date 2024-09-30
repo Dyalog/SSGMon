@@ -4,7 +4,6 @@
 ⍝                  13 for global unexpected errors
 
  ⎕PW←1000
- SSGDEBUG←1
  :If 0=⎕NC 'SSGDEBUG' ⋄ SSGDEBUG←0 ⋄ :EndIf
  Exit←{SSGDEBUG:('Runtime would have exited with code ',⍕⍵)⎕SIGNAL 11 ⋄ ⎕OFF ⍵}
 
