@@ -138,5 +138,5 @@ SEND:
      SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
      ⎕←'Sent 3rd party vulnerablility check list:'subject
  :Else
-     ⎕←'No new vulnerabilities to send to ',MAILTO
+     ⎕←'No new 3rd party vulnerabilities to send to ',MAILTO
  :EndIf
