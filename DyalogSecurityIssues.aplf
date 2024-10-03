@@ -93,9 +93,11 @@
 
 SEND:
  :If 0≠≢msg
-     ⎕←'About to send security issues email'
+     ⎕←'About to send Mantis security issues email to ',MAILTO
      SendMail MAILSERVER MAILFROM SMTPPASS MAILTO('SSGMon: ',subject)msg
-     ⎕←'Sent security issues email: ' subject
+     ⎕←'Sent Mantis security issues email: ' subject
+ :Else
+     ⎕←'No changes to Mantis security issues so not emailing ',MAILTO
  :EndIf
 
  :If fileok
