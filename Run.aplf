@@ -14,8 +14,14 @@
          Exit 12
      :EndIf
      InitGlobals
-     :If 0≠≢msg←DyalogSecurityIssues INTERVAL ⋄ ⎕←msg ⋄ :EndIf
-     :If 0≠≢msg←ThirdPartyVulnerabilities INTERVAL ⋄ ⎕←msg ⋄ :EndIf
+     :if POLLTYPE≢'thirdparty'
+	 ⎕←'Checking Mantis'
+         :If 0≠≢msg←DyalogSecurityIssues INTERVAL ⋄ ⎕←msg ⋄ :EndIf
+     :EndIf
+     :if POLLTYPE≢'mantis'
+	 ⎕←'Checking third party sites'
+         :If 0≠≢msg←ThirdPartyVulnerabilities INTERVAL ⋄ ⎕←msg ⋄ :EndIf
+     :EndIf
      Exit 10
  :Else
 
