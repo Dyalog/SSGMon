@@ -1,6 +1,6 @@
 "Component"  ,"CPE"                          ,"URL"
 "GnuTLS"     ,"a:gnu:gnutls:3.6.5"           ,"gnutls.org/news.atom"
-"OpenSSL"    ,"a:openssl:openssl:1.0.1g"     ,"www.openssl.org/news/vulnerabilities.html"
+"OpenSSL"    ,"a:openssl:openssl:1.0.1g"     ,"www.openssl.org/news/vulnerabilities/index.html"
 "LibNettle"  ,"a:nettle_project:nettle:3.4.1","git.lysator.liu.se/nettle/nettle.atom"
 "PCRE"       ,"a:pcre:pcre:8.45"             ,""
 "dbl-cnv"    ,""                             ,"github.com/google/double-conversion/security/advisories"
