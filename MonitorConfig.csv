@@ -9,6 +9,7 @@
 "LZ4"        ,"a:lz4_project:lz4:1.9.2"      ,""
 "zlib12"     ,"a:zlib:zlib:1.2.11"           ,""
 "zlib13"     ,"a:zlib:zlib:1.3"              ,""
+"cef"        ,"a:chromiumembedded:chromium_embedded_framework:-"  ,""
 "StackWalker",""                             ,"github.com/JochenKalmbach/StackWalker/security/advisories"
 "SharpZipLib","a:sharpziplib_project:sharpziplib:-",""
 "NGif"       ,""                             ,"github.com/avianbc/NGif/security/advisories"
