@@ -17,13 +17,13 @@
 ⍝ the use of such as [WORKSPACE]/mydir - so just use env instead
 ⍝ config←0 ⎕JSON⍠'Dialect' 'JSON5'⊣⊃⎕NGET configfile
 
- DATABASE←            'DevDb' env 'DATABASE'
- INTERVAL←               '-1' env 'INTERVAL' ⍝ Default: Report all issues
- MAILSERVER←'mail.dyalog.com' env 'MAILSERVER'
- MAILFROM← 'mkrom@dyalog.com' env 'MAILFROM'
- MAILTO←   'mkrom@dyalog.com' env 'MAILTO'
- POLLTYPE← 'both'             env 'POLLTYPE'	⍝ Can be 'both', 'mantis' or 'thirdparty'
- SSGDEBUG←          ⎕JSON '0' env 'DEBUG'
+ DATABASE←             'DevDb' env 'DATABASE'
+ INTERVAL←                '-1' env 'INTERVAL' ⍝ Default: Report all issues
+ MAILSERVER←'mail2.dyalog.com' env 'MAILSERVER'
+ MAILFROM←  'mkrom@dyalog.com' env 'MAILFROM'
+ MAILTO←    'mkrom@dyalog.com' env 'MAILTO'
+ POLLTYPE←              'both' env 'POLLTYPE'	⍝ Can be 'both', 'mantis' or 'thirdparty'
+ SSGDEBUG←           ⎕JSON '0' env 'DEBUG'
 
  INTERVAL←⍬⍴⊃(//)⎕vfi '¯'@{⍵='-'}⊢INTERVAL      ⍝ Possibly ought to do more checking here
 
@@ -32,7 +32,7 @@
  MONITORCFG←root,'MonitorConfig.csv'
 
 ⍝ From environment: DO NOT PUT THESE in config!
- SMTPPASS←                    env 'SMTP_PWD'
- MANTISAPITOKEN←              env 'MANTIS_TKN'
+ SMTPPASS←                     env 'SMTP_PWD'
+ MANTISAPITOKEN←               env 'MANTIS_TKN'
 
  DATABASE←((~∨/'/\:'∊2↑DATABASE)/root),DATABASE

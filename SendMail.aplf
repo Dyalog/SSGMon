@@ -1,7 +1,7 @@
 SendMail (mailserver sender password recipient subject body);smtp;M;⎕USING
 ⍝ Send message using .NET Core
 
-⍝ mailserver←'mail.dyalog.com'
+⍝ mailserver←'mail2.dyalog.com'
 ⍝ sender←'mkrom@dyalog.com'
 ⍝ recipient←'mkrom@dyalog.com'
 ⍝ password←'…'
@@ -11,7 +11,7 @@ SendMail (mailserver sender password recipient subject body);smtp;M;⎕USING
   ⎕USING←'System.Net,System.Net.Mail' 'System.Net,System.Net.Primitives' ⍝ .NET Core
 
   smtp←⎕NEW Mail.SmtpClient(⊂mailserver)
-  smtp.Port←26
+  smtp.Port←587
   smtp.Credentials←⎕NEW NetworkCredential (sender password)
 
   M←⎕NEW Mail.MailMessage(sender recipient subject (∊body))

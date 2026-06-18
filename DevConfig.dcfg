@@ -4,7 +4,7 @@
   DATABASE:    "DevDb",
   INTERVAL: -1, // Report All Security Issues 
                 // 0 means report changes since last run
-  MAILSERVER: "mail.dyalog.com",
+  MAILSERVER: "mail2.dyalog.com",
   MAILFROM:   "mkrom@dyalog.com", // nightly@dyalog.com in production
   MAILTO:     "mkrom@dyalog.com", // ssg@dyalog.com
 }
